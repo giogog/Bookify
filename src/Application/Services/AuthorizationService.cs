@@ -119,7 +119,7 @@ namespace Application.Services
             return IdentityResult.Success;
         }
 
-        public async Task<LoginResponseDto> LoginWithToken(LoginDto loginDto)
+        public async Task<LoginWithTokenResult> LoginWithToken(LoginDto loginDto)
         {
             _logger.LogInformation("Logging in user {Username}.", loginDto.Username);
 
@@ -127,20 +127,21 @@ namespace Application.Services
             if (user == null)
             {
                 _logger.LogWarning("User {Username} does not exist.", loginDto.Username);
-                throw new NotFoundException("User not found.");
+                // Avoid user enumeration.
+                return new LoginWithTokenResult(false, "InvalidCredentials", "Invalid username or password.", null);
             }
 
             var passwordCheck = await _repositoryManager.UserRepository.CheckPasswordAsync(user, loginDto.Password);
             if (!passwordCheck)
             {
                 _logger.LogWarning("Incorrect password for user {Username}.", loginDto.Username);
-                throw new UnauthorizedAccessException("Incorrect password.");
+                return new LoginWithTokenResult(false, "InvalidCredentials", "Invalid username or password.", null);
             }
 
             if (!user.EmailConfirmed)
             {
                 _logger.LogWarning("Email not confirmed for user {Username}.", loginDto.Username);
-                throw new MailNotConfirmedException("Please confirm your email.");
+                return new LoginWithTokenResult(false, "MailNotConfirmed", "Please confirm your email.", null);
             }
 
             var username = user.UserName ?? throw new InvalidOperationException("UserName is missing for the authenticated user.");
@@ -149,7 +150,7 @@ namespace Application.Services
 
             _logger.LogInformation("User {Username} logged in successfully.", username);
 
-            return new LoginResponseDto(user.Id, username, token);
+            return new LoginWithTokenResult(true, null, null, new LoginResponseDto(user.Id, username, token));
         }
 
         public async Task<IdentityResult> AddNewRole(string newRole)

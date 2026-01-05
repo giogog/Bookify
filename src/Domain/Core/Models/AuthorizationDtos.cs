@@ -29,6 +29,8 @@ public record LoginDto
 public record LoginResponseDto(Guid Id,string Username, string Token);
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 
+public record LoginWithTokenResult(bool Succeeded, string? ErrorCode, string? ErrorMessage, LoginResponseDto? Data);
+
 public record PasswordResetRequestDto
 {
     [Required(ErrorMessage = "Email is required.")]

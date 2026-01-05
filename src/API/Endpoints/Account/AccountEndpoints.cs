@@ -46,12 +46,28 @@ public static class AccountEndpoints
 
         group.MapPost("/login", async (LoginDto loginDto, IServiceManager serviceManager) =>
         {
-            var loginResponse = await serviceManager.AuthorizationService.LoginWithToken(loginDto);
+            var result = await serviceManager.AuthorizationService.LoginWithToken(loginDto);
+
+            if (!result.Succeeded)
+            {
+                // Avoid user enumeration by using the same message for missing user vs wrong password.
+                var statusCode = string.Equals(result.ErrorCode, "InvalidCredentials", StringComparison.Ordinal)
+                    ? Convert.ToInt32(HttpStatusCode.Unauthorized)
+                    : Convert.ToInt32(HttpStatusCode.BadRequest);
+
+                var failureResponse = new ApiResponse(
+                    result.ErrorMessage ?? "Login failed.",
+                    false,
+                    null,
+                    statusCode);
+
+                return Results.Json(failureResponse, statusCode: failureResponse.StatusCode);
+            }
 
             var apiResponse = new ApiResponse(
                 "User logged in successfully",
                 true,
-                loginResponse,
+                result.Data,
                 Convert.ToInt32(HttpStatusCode.OK));
 
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);

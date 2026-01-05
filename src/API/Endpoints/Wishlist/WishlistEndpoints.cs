@@ -10,7 +10,7 @@ public static class WishlistEndpoints
     {
         var userRoutes = app.MapGroup("api/User").RequireAuthorization("User_Policy");
 
-        userRoutes.MapPost("/Wishlist/Add", async (string userId, string bookId, IServiceManager serviceManager, HttpContext httpContext) =>
+        userRoutes.MapPost("/Wishlist/Add", async (string bookId, IServiceManager serviceManager, HttpContext httpContext) =>
         {
             var currentUserId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -24,7 +24,7 @@ public static class WishlistEndpoints
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
-        userRoutes.MapDelete("/Wishlist/Remove", async (string userId, string bookId, IServiceManager serviceManager, HttpContext httpContext) =>
+        userRoutes.MapDelete("/Wishlist/Remove", async (string bookId, IServiceManager serviceManager, HttpContext httpContext) =>
         {
             var currentUserId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -38,7 +38,7 @@ public static class WishlistEndpoints
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
-        userRoutes.MapGet("/Wishlist/{userId}", async (string userId, IServiceManager serviceManager, HttpContext httpContext) =>
+        userRoutes.MapGet("/Wishlist", async (IServiceManager serviceManager, HttpContext httpContext) =>
         {
             var currentUserId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(currentUserId))
