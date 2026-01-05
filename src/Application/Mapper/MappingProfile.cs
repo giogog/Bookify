@@ -11,8 +11,8 @@ public class MappingProfile : Profile
         CreateMap<Book, BookDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
-            .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author.Name))
-            .ForMember(dest => dest.AuthorSurname, opt => opt.MapFrom(src => src.Author.Surname));
+            .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.Name : string.Empty))
+            .ForMember(dest => dest.AuthorSurname, opt => opt.MapFrom(src => src.Author != null ? src.Author.Surname : null));
 
 
     }

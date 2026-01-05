@@ -6,9 +6,16 @@ using System.Net;
 public class GlobalExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
     public GlobalExceptionHandlingMiddleware(RequestDelegate next)
     {
         _next = next;
+    }
+
+    public GlobalExceptionHandlingMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
     }
 
     public async Task Invoke(HttpContext context)
@@ -19,6 +26,7 @@ public class GlobalExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex, "Unhandled exception processing {Method} {Path}", context.Request.Method, context.Request.Path);
             await HandleException(context, ex);
         }
     }
@@ -71,7 +79,7 @@ public class GlobalExceptionHandlingMiddleware
                 Exception ex:
                 apiResponse.StatusCode = Convert.ToInt32(HttpStatusCode.InternalServerError);
                 apiResponse.IsSuccess = false;
-                apiResponse.Message = ex.Message;
+                apiResponse.Message = "An unexpected error occurred.";
                 apiResponse.Data = null;
                 break;
             default:

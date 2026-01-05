@@ -15,9 +15,18 @@ Log.Logger = new LoggerConfiguration()
 // Custom configurations
 builder.Services.ConfigureCors();
 
-//configure dbs
-builder.Services.ConfigureSqlServer(builder.Configuration); 
-builder.Services.ConfigureInMemoryDb(); 
+// Configure DB
+// IMPORTANT: only one provider should be registered for ApplicationDbContext.
+// Set UseInMemoryDb=true in configuration to use the InMemory provider.
+var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDb");
+if (useInMemoryDb)
+{
+    builder.Services.ConfigureInMemoryDb();
+}
+else
+{
+    builder.Services.ConfigureSqlServer(builder.Configuration);
+}
 builder.Services.ConfigureDapper();
 builder.Services.ConfigureJwtOptions(builder.Configuration);
 builder.Services.GeneralConfiguration(builder.Configuration);

@@ -1,3 +1,4 @@
+#nullable enable
 namespace API;
 
 public record PaginatedApiResponse : ApiResponse
@@ -16,3 +17,4 @@ public record PaginatedApiResponse : ApiResponse
     }
 
 }
+#nullable disable

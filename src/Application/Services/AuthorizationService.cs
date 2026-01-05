@@ -34,13 +34,15 @@ namespace Application.Services
                 throw new NotFoundException("User not found.");
             }
 
-            _logger.LogInformation("User {Username} found. Generating token.", user.UserName);
+            var username = user.UserName ?? throw new InvalidOperationException("UserName is missing for the authenticated user.");
+
+            _logger.LogInformation("User {Username} found. Generating token.", username);
 
             var token = await _tokenGenerator.GenerateToken(user);
 
-            _logger.LogInformation("Token generated for user {Username}.", user.UserName);
+            _logger.LogInformation("Token generated for user {Username}.", username);
 
-            return new LoginResponseDto(user.Id, user.UserName, token);
+            return new LoginResponseDto(user.Id, username, token);
         }
 
         public async Task<IdentityResult> Register(RegisterDto registerDto)

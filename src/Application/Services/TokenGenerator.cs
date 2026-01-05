@@ -39,8 +39,9 @@ public class TokenGenerator : ITokenGenerator
         var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Email,user.Email)
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
 
             };
 
@@ -55,7 +56,7 @@ public class TokenGenerator : ITokenGenerator
             Audience = _jwtOptions.Audience,
             Issuer = _jwtOptions.Issuer,
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.Now.AddDays(7),
+            Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = creds
         };
         var tokenHandler = new JwtSecurityTokenHandler();

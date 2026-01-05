@@ -3,6 +3,7 @@ using Application.MediatR.Commands;
 using Contracts;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Application.MediatR.Handlers.Command;
@@ -49,12 +50,11 @@ public class AddBookCommandHandler(IRepositoryManager repositoryManager,IService
             throw new BookAlreadyExistsException($"Book: {request.Name} with this author: {request.AuthName} {request.AuthSurname} already exists.");
         }
 
-        // Start category retrieval but delay awaiting until the end
-        var checkCategoryTask = Task.Run(() =>
-            _repositoryManager.CategoryRepository
-                .Categories()
-                .FirstOrDefault(c => c.Name == request.Category)
-        );
+        // Start category retrieval (DbContext is NOT thread-safe, so avoid Task.Run)
+        var checkCategoryTask = _repositoryManager.CategoryRepository
+            .Categories()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Name == request.Category, cancellationToken);
         // start uploading photo to cloudinary
         
         // Log author status
@@ -73,7 +73,7 @@ public class AddBookCommandHandler(IRepositoryManager repositoryManager,IService
                 Name = request.AuthName,
                 Surname = request.AuthSurname
             },
-            AuthorId = author?.Id ?? Guid.Empty // If author exists, set AuthorId; otherwise, this will be updated
+            AuthorId = author?.Id ?? Guid.Empty // kept for compatibility with existing model conventions
         };
 
         // Await the category task after main tasks are completed
