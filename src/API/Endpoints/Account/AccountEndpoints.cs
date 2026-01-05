@@ -96,17 +96,37 @@ public static class AccountEndpoints
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
-        group.MapPost("/request-password-reset/{email}", async (
+        static async Task<IResult> RequestPasswordReset(
             string email,
             IMediator mediator,
             HttpContext httpContext,
-            CancellationToken cancellationToken) =>
+            CancellationToken cancellationToken)
         {
             var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
             await mediator.Publish(new PasswordResetRequestNotification(email, baseUrl), cancellationToken);
 
             var apiResponse = new ApiResponse("Please check your email to for password reset.", true, null, Convert.ToInt32(HttpStatusCode.Created));
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
+        }
+
+        // Preferred: do not place emails in URLs.
+        group.MapPost("/request-password-reset", async (
+            PasswordResetRequestDto request,
+            IMediator mediator,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            return await RequestPasswordReset(request.Email, mediator, httpContext, cancellationToken);
+        });
+
+        // Backward-compatible: keep the existing route.
+        group.MapPost("/request-password-reset/{email}", async (
+            string email,
+            IMediator mediator,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            return await RequestPasswordReset(email, mediator, httpContext, cancellationToken);
         });
 
         group.MapPut("/reset-password", async (ResetPasswordDto resetPasswordDto, IServiceManager serviceManager) =>

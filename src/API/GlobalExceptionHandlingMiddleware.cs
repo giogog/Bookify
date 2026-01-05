@@ -70,7 +70,7 @@ public class GlobalExceptionHandlingMiddleware
                 break;
             case
                 UnauthorizedAccessException unauthorizedAccessException:
-                apiResponse.StatusCode = Convert.ToInt32(HttpStatusCode.Forbidden);
+                apiResponse.StatusCode = Convert.ToInt32(HttpStatusCode.Unauthorized);
                 apiResponse.IsSuccess = false;
                 apiResponse.Message = unauthorizedAccessException.Message;
                 apiResponse.Data = null;

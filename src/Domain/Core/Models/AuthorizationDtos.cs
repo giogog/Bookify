@@ -29,3 +29,10 @@ public record LoginDto
 public record LoginResponseDto(Guid Id,string Username, string Token);
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 
+public record PasswordResetRequestDto
+{
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email address.")]
+    public string Email { get; init; } = string.Empty;
+}
+
