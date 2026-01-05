@@ -9,7 +9,6 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 // Custom configurations
@@ -80,13 +79,6 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 
-app.MapGetEnpoints();
-app.MapAdminEnpoints();
-app.MapUserEnpoints();
-
-
-
-
-app.MapControllers();
+app.MapApiEndpoints();
 
 app.Run();

@@ -1,7 +1,6 @@
 ﻿using Application.MediatR.Notifications;
 using Contracts;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 public class SendPasswordResetEmailEventHandler : INotificationHandler<PasswordResetRequestNotification>
@@ -42,12 +41,14 @@ public class SendPasswordResetEmailEventHandler : INotificationHandler<PasswordR
 
         var token = await _tokenGenerator.GeneratePasswordResetToken(user);
 
-        var callbackUrl = notification.UrlHelper.Action("ResetPasswordToken", "Account", new { token, email = notification.Email }, protocol: "https");
-        if (string.IsNullOrEmpty(callbackUrl))
+        var baseUrl = (notification.BaseUrl ?? string.Empty).TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            _logger.LogWarning("Failed to generate callback URL for password reset for user with email {Email}.", notification.Email);
+            _logger.LogWarning("Base URL not provided for password reset for user with email {Email}.", notification.Email);
             return;
         }
+
+        var callbackUrl = $"{baseUrl}/api/Account/reset-password-token?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(notification.Email)}";
 
         var emailResult = await _emailSender.SendEmailAsync(notification.Email, "Reset Password", $"Please reset your password by <a href='{callbackUrl}'>clicking here</a>.");
         if (emailResult.IsSuccess)

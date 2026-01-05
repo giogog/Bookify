@@ -1,7 +1,6 @@
 ﻿using Application.MediatR.Notifications;
 using Contracts;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 public class SendConfirmationMailEventHandler : INotificationHandler<UserCreatedNotification>
@@ -41,12 +40,14 @@ public class SendConfirmationMailEventHandler : INotificationHandler<UserCreated
             return;
         }
 
-        var callbackUrl = notification.UrlHelper.Action("ConfirmEmail", "Account", new { userId = user.Id, token }, protocol: "https");
-        if (string.IsNullOrEmpty(callbackUrl))
+        var baseUrl = (notification.BaseUrl ?? string.Empty).TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            _logger.LogWarning("Failed to generate callback URL for user {Username}.", notification.Username);
+            _logger.LogWarning("Base URL not provided for user {Username}.", notification.Username);
             return;
         }
+
+        var callbackUrl = $"{baseUrl}/api/Account/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
         _logger.LogInformation("Sending confirmation email to {Email} for user {Username}.", user.Email, notification.Username);
 

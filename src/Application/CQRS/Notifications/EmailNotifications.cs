@@ -1,11 +1,7 @@
-﻿using Domain.Exception;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+
 namespace Application.MediatR.Notifications;
 
+public record UserCreatedNotification(string Username, string BaseUrl) : INotification;
 
-
-public record UserCreatedNotification(string Username, IUrlHelper UrlHelper) : INotification;
-
-
-public record PasswordResetRequestNotification(string Email, IUrlHelper UrlHelper) : INotification;
+public record PasswordResetRequestNotification(string Email, string BaseUrl) : INotification;
