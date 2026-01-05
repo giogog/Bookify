@@ -8,40 +8,24 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.MediatR.Handlers.Command;
 
-public class AddBookCommandHandler(IRepositoryManager repositoryManager,IServiceManager serviceManager, IDapperDbConnection dapperConn, ILogger<AddBookCommandHandler> logger) : IRequestHandler<AddBookCommand>
+public class AddBookCommandHandler(IRepositoryManager repositoryManager,IServiceManager serviceManager, ILogger<AddBookCommandHandler> logger) : IRequestHandler<AddBookCommand>
 {
     private readonly IRepositoryManager _repositoryManager = repositoryManager;
     private readonly IServiceManager _serviceManager = serviceManager;
-    private readonly IDapperDbConnection _dapperConn = dapperConn;
     private readonly ILogger<AddBookCommandHandler> _logger = logger;
 
     public async Task Handle(AddBookCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Start handling AddBookCommand for book: {BookName}", request.Name);
 
-        // SQL query to check if the book already exists
-        var checkBookExistsQuery = @"
-        SELECT COUNT(1) 
-        FROM dbo.Books AS b
-        JOIN dbo.Authors AS a ON b.AuthorId = a.Id
-        WHERE b.Name = @Name AND a.Name = @AuthName AND a.Surname = @AuthSurname";
-
-        var parameters = new
-        {
-            request.Name,
-            request.AuthName,
-            request.AuthSurname
-        };
-
-
-        // Run the tasks concurrently
-        var checkIfBookExistsTask = _dapperConn.CheckIfExists<dynamic>(checkBookExistsQuery, parameters);
-        var getAuthorTask = _repositoryManager.AuthorRepository.GetAuthorByNameAsync(request.AuthName, request.AuthSurname);
-
-
-        // Wait for book existence and author check concurrently
-        bool bookExists = await checkIfBookExistsTask;
-        var author = await getAuthorTask;
+        var bookExists = await _repositoryManager.BookRepository.Books()
+            .AsNoTracking()
+            .AnyAsync(
+                b => b.Name == request.Name
+                     && b.Author != null
+                     && b.Author.Name == request.AuthName
+                     && b.Author.Surname == request.AuthSurname,
+                cancellationToken);
 
         // Check if the book already exists
         if (bookExists)
@@ -49,6 +33,8 @@ public class AddBookCommandHandler(IRepositoryManager repositoryManager,IService
             _logger.LogWarning("Book '{BookName}' by {AuthName} {AuthSurname} already exists.", request.Name, request.AuthName, request.AuthSurname);
             throw new BookAlreadyExistsException($"Book: {request.Name} with this author: {request.AuthName} {request.AuthSurname} already exists.");
         }
+
+        var author = await _repositoryManager.AuthorRepository.GetAuthorByNameAsync(request.AuthName, request.AuthSurname);
 
         // Start category retrieval (DbContext is NOT thread-safe, so avoid Task.Run)
         var checkCategoryTask = _repositoryManager.CategoryRepository
@@ -72,8 +58,7 @@ public class AddBookCommandHandler(IRepositoryManager repositoryManager,IService
             {
                 Name = request.AuthName,
                 Surname = request.AuthSurname
-            },
-            AuthorId = author?.Id ?? Guid.Empty // kept for compatibility with existing model conventions
+            }
         };
 
         // Await the category task after main tasks are completed

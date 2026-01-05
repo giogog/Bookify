@@ -119,6 +119,39 @@ namespace Application.Services
             return IdentityResult.Success;
         }
 
+        public async Task<LoginResponseDto> LoginWithToken(LoginDto loginDto)
+        {
+            _logger.LogInformation("Logging in user {Username}.", loginDto.Username);
+
+            var user = await _repositoryManager.UserRepository.GetUserAsync(u => u.UserName == loginDto.Username);
+            if (user == null)
+            {
+                _logger.LogWarning("User {Username} does not exist.", loginDto.Username);
+                throw new NotFoundException("User not found.");
+            }
+
+            var passwordCheck = await _repositoryManager.UserRepository.CheckPasswordAsync(user, loginDto.Password);
+            if (!passwordCheck)
+            {
+                _logger.LogWarning("Incorrect password for user {Username}.", loginDto.Username);
+                throw new UnauthorizedAccessException("Incorrect password.");
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                _logger.LogWarning("Email not confirmed for user {Username}.", loginDto.Username);
+                throw new MailNotConfirmedException("Please confirm your email.");
+            }
+
+            var username = user.UserName ?? throw new InvalidOperationException("UserName is missing for the authenticated user.");
+
+            var token = await _tokenGenerator.GenerateToken(user);
+
+            _logger.LogInformation("User {Username} logged in successfully.", username);
+
+            return new LoginResponseDto(user.Id, username, token);
+        }
+
         public async Task<IdentityResult> AddNewRole(string newRole)
         {
             _logger.LogInformation("Adding new role {Role}.", newRole);

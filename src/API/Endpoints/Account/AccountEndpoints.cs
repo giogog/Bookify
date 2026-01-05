@@ -16,7 +16,8 @@ public static class AccountEndpoints
             RegisterDto registerDto,
             IServiceManager serviceManager,
             IMediator mediator,
-            HttpContext httpContext) =>
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
         {
             var registrationCheckUp = await serviceManager.AuthorizationService.Register(registerDto);
 
@@ -32,7 +33,7 @@ public static class AccountEndpoints
             }
 
             var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
-            await mediator.Publish(new UserCreatedNotification(registerDto.Username, baseUrl));
+            await mediator.Publish(new UserCreatedNotification(registerDto.Username, baseUrl), cancellationToken);
 
             var apiResponse = new ApiResponse(
                 "Registration successful. Please check your email to confirm your account.",
@@ -45,30 +46,22 @@ public static class AccountEndpoints
 
         group.MapPost("/login", async (LoginDto loginDto, IServiceManager serviceManager) =>
         {
-            var loginCheckUp = await serviceManager.AuthorizationService.Login(loginDto);
-
-            if (!loginCheckUp.Succeeded)
-            {
-                var response = new ApiResponse(
-                    loginCheckUp.Errors.First().Description,
-                    false,
-                    null,
-                    Convert.ToInt32(HttpStatusCode.BadRequest));
-
-                return Results.Json(response, statusCode: response.StatusCode);
-            }
+            var loginResponse = await serviceManager.AuthorizationService.LoginWithToken(loginDto);
 
             var apiResponse = new ApiResponse(
                 "User logged in successfully",
                 true,
-                await serviceManager.AuthorizationService.Authenticate(user => user.UserName == loginDto.Username),
+                loginResponse,
                 Convert.ToInt32(HttpStatusCode.OK));
 
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
-        group.MapGet("/confirm-email", async (int userId, string token, IServiceManager serviceManager) =>
+        group.MapGet("/confirm-email", async (Guid userId, string token, IServiceManager serviceManager) =>
         {
+            // Token may contain '+' which can be decoded as a space in query strings.
+            token = token.Replace(' ', '+');
+
             var result = await serviceManager.EmailService.ConfirmEmailAsync(userId.ToString(), token);
 
             if (!result.Succeeded)
@@ -85,7 +78,8 @@ public static class AccountEndpoints
             string username,
             IServiceManager serviceManager,
             IMediator mediator,
-            HttpContext httpContext) =>
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
         {
             var alreadyConfirmed = await serviceManager.EmailService.CheckMailConfirmationAsync(username);
 
@@ -96,7 +90,7 @@ public static class AccountEndpoints
             }
 
             var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
-            await mediator.Publish(new UserCreatedNotification(username, baseUrl));
+            await mediator.Publish(new UserCreatedNotification(username, baseUrl), cancellationToken);
 
             var apiResponse = new ApiResponse("Please check your email to confirm your account.", true, null, Convert.ToInt32(HttpStatusCode.OK));
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
@@ -105,18 +99,13 @@ public static class AccountEndpoints
         group.MapPost("/request-password-reset/{email}", async (
             string email,
             IMediator mediator,
-            HttpContext httpContext) =>
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
         {
             var baseUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
-            await mediator.Publish(new PasswordResetRequestNotification(email, baseUrl));
+            await mediator.Publish(new PasswordResetRequestNotification(email, baseUrl), cancellationToken);
 
             var apiResponse = new ApiResponse("Please check your email to for password reset.", true, null, Convert.ToInt32(HttpStatusCode.Created));
-            return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
-        });
-
-        group.MapGet("/reset-password-token", (string token, string email) =>
-        {
-            var apiResponse = new ApiResponse("Password reset Token.", true, token, Convert.ToInt32(HttpStatusCode.OK));
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 

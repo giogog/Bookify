@@ -28,7 +28,6 @@ else
 {
     builder.Services.ConfigureSqlServer(builder.Configuration);
 }
-builder.Services.ConfigureDapper();
 builder.Services.ConfigureJwtOptions(builder.Configuration);
 builder.Services.GeneralConfiguration(builder.Configuration);
 builder.Services.ConfigureAutomapper();
