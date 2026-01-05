@@ -10,10 +10,12 @@ using Infrastructure.Context;
 using Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace API.Extensions
 {
@@ -35,10 +37,29 @@ namespace API.Extensions
 
         public static void ConfigureIdentityService(this IServiceCollection services, IConfiguration config)
         {
+            var issuer = config.GetValue<string>("ApiSettings:JwtOptions:Issuer");
+            var audience = config.GetValue<string>("ApiSettings:JwtOptions:Audience");
+            var tokenKey = config.GetValue<string>("ApiSettings:JwtOptions:Secret");
 
-            string Issuer = config.GetValue<string>("ApiSettings:JwtOptions:Issuer");
-            string Audience = config.GetValue<string>("ApiSettings:JwtOptions:Audience");
-            string TokenKey = config.GetValue<string>("ApiSettings:JwtOptions:Secret");
+            if (string.IsNullOrWhiteSpace(issuer))
+            {
+                throw new InvalidOperationException("Missing configuration value: ApiSettings:JwtOptions:Issuer");
+            }
+
+            if (string.IsNullOrWhiteSpace(audience))
+            {
+                throw new InvalidOperationException("Missing configuration value: ApiSettings:JwtOptions:Audience");
+            }
+
+            if (string.IsNullOrWhiteSpace(tokenKey))
+            {
+                throw new InvalidOperationException("Missing configuration value: ApiSettings:JwtOptions:Secret");
+            }
+
+            if (tokenKey.Length < 32)
+            {
+                throw new InvalidOperationException("ApiSettings:JwtOptions:Secret must be at least 32 characters.");
+            }
 
             services.AddIdentity<User, Role>(option =>
             {
@@ -59,18 +80,45 @@ namespace API.Extensions
             })
                 .AddJwtBearer(options =>
                 {
+                    options.RequireHttpsMetadata = !config.GetValue<bool>("Jwt:DisableHttpsMetadata");
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey)),
                         ValidateIssuer = true,
                         ValidateAudience = true,
-                        ValidIssuer = Issuer,
-                        ValidAudience = Audience,
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.Zero
                     };
                 });
+        }
+
+        public static void ConfigureRateLimiting(this IServiceCollection services, IConfiguration config)
+        {
+            var permitLimit = config.GetValue<int?>("RateLimiting:PermitLimit") ?? 120;
+            var windowSeconds = config.GetValue<int?>("RateLimiting:WindowSeconds") ?? 60;
+            var queueLimit = config.GetValue<int?>("RateLimiting:QueueLimit") ?? 0;
+
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+                {
+                    var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        key,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = permitLimit,
+                            Window = TimeSpan.FromSeconds(windowSeconds),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = queueLimit,
+                            AutoReplenishment = true
+                        });
+                });
+            });
         }
 
         public static void GeneralConfiguration(this IServiceCollection services, IConfiguration config)
@@ -138,14 +186,25 @@ namespace API.Extensions
         public static void ConfigureMediatR(this IServiceCollection services) =>
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(MediatRConfiguration).Assembly));
 
-        public static void ConfigureCors(this IServiceCollection services) =>
+        public static void ConfigureCors(this IServiceCollection services, IConfiguration config) =>
             services.AddCors(options =>
             {
+                var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                    ?? ["https://localhost:5003"];
+                var allowCredentials = config.GetValue<bool>("Cors:AllowCredentials");
+
                 options.AddPolicy("AllowSpecificOrigin",
-                    builder => builder.WithOrigins("https://localhost:5003")
-                                      .AllowAnyMethod()
-                                      .AllowAnyHeader()
-                                      .AllowCredentials());
+                    policy =>
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+
+                        if (allowCredentials)
+                        {
+                            policy.AllowCredentials();
+                        }
+                    });
             });
     }
 }

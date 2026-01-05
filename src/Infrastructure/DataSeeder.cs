@@ -17,41 +17,42 @@ public static class DataSeeder
 
         
         PasswordHasher<User> hasher = new();
-        modelBuilder.Entity<User>().HasData(
-            new User
-            {
-                Id = adminGuid,
-                UserName = "admin",
-                NormalizedUserName = "ADMIN@GMAIL.COM",
-                Email = "admin@gmail.com",
-                NormalizedEmail = "ADMIN@GMAIL.COM",
-                EmailConfirmed = true,
-                PasswordHash = hasher.HashPassword(null, "Admin123"),
-                PhoneNumber = "555334455",
-                PhoneNumberConfirmed = false,
-                TwoFactorEnabled = false,
-                LockoutEnd = null,
-                LockoutEnabled = true,
-                AccessFailedCount = 0,
-            },
-            new User
-            {
-                Id = userGuid,
-                UserName = "User1",
-                NormalizedUserName = "USER1",
-                Email = "user@gmail.com",
-                NormalizedEmail = "USER@GMAIL.COM",
-                EmailConfirmed = true,
-                PasswordHash = hasher.HashPassword(null, "Ab123123"),
-                PhoneNumber = "555334457",
-                PhoneNumberConfirmed = false,
-                TwoFactorEnabled = false,
-                LockoutEnd = null,
-                LockoutEnabled = true,
-                AccessFailedCount = 0,
 
-            }
-        );
+        var adminUser = new User
+        {
+            Id = adminGuid,
+            UserName = "admin",
+            NormalizedUserName = "ADMIN@GMAIL.COM",
+            Email = "admin@gmail.com",
+            NormalizedEmail = "ADMIN@GMAIL.COM",
+            EmailConfirmed = true,
+            PhoneNumber = "555334455",
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled = false,
+            LockoutEnd = null,
+            LockoutEnabled = true,
+            AccessFailedCount = 0,
+        };
+        adminUser.PasswordHash = hasher.HashPassword(adminUser, "Admin123");
+
+        var regularUser = new User
+        {
+            Id = userGuid,
+            UserName = "User1",
+            NormalizedUserName = "USER1",
+            Email = "user@gmail.com",
+            NormalizedEmail = "USER@GMAIL.COM",
+            EmailConfirmed = true,
+            PhoneNumber = "555334457",
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled = false,
+            LockoutEnd = null,
+            LockoutEnabled = true,
+            AccessFailedCount = 0,
+        };
+        regularUser.PasswordHash = hasher.HashPassword(regularUser, "Ab123123");
+
+        modelBuilder.Entity<User>().HasData(adminUser, regularUser);
     }
 
     public static void SeedRoles(this ModelBuilder modelBuilder)

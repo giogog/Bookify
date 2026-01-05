@@ -34,13 +34,15 @@ namespace Application.Services
                 throw new NotFoundException("User not found.");
             }
 
-            _logger.LogInformation("User {Username} found. Generating token.", user.UserName);
+            var username = user.UserName ?? throw new InvalidOperationException("UserName is missing for the authenticated user.");
+
+            _logger.LogInformation("User {Username} found. Generating token.", username);
 
             var token = await _tokenGenerator.GenerateToken(user);
 
-            _logger.LogInformation("Token generated for user {Username}.", user.UserName);
+            _logger.LogInformation("Token generated for user {Username}.", username);
 
-            return new LoginResponseDto(user.Id, user.UserName, token);
+            return new LoginResponseDto(user.Id, username, token);
         }
 
         public async Task<IdentityResult> Register(RegisterDto registerDto)
@@ -115,6 +117,40 @@ namespace Application.Services
             _logger.LogInformation("User {Username} logged in successfully.", loginDto.Username);
 
             return IdentityResult.Success;
+        }
+
+        public async Task<LoginWithTokenResult> LoginWithToken(LoginDto loginDto)
+        {
+            _logger.LogInformation("Logging in user {Username}.", loginDto.Username);
+
+            var user = await _repositoryManager.UserRepository.GetUserAsync(u => u.UserName == loginDto.Username);
+            if (user == null)
+            {
+                _logger.LogWarning("User {Username} does not exist.", loginDto.Username);
+                // Avoid user enumeration.
+                return new LoginWithTokenResult(false, "InvalidCredentials", "Invalid username or password.", null);
+            }
+
+            var passwordCheck = await _repositoryManager.UserRepository.CheckPasswordAsync(user, loginDto.Password);
+            if (!passwordCheck)
+            {
+                _logger.LogWarning("Incorrect password for user {Username}.", loginDto.Username);
+                return new LoginWithTokenResult(false, "InvalidCredentials", "Invalid username or password.", null);
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                _logger.LogWarning("Email not confirmed for user {Username}.", loginDto.Username);
+                return new LoginWithTokenResult(false, "MailNotConfirmed", "Please confirm your email.", null);
+            }
+
+            var username = user.UserName ?? throw new InvalidOperationException("UserName is missing for the authenticated user.");
+
+            var token = await _tokenGenerator.GenerateToken(user);
+
+            _logger.LogInformation("User {Username} logged in successfully.", username);
+
+            return new LoginWithTokenResult(true, null, null, new LoginResponseDto(user.Id, username, token));
         }
 
         public async Task<IdentityResult> AddNewRole(string newRole)

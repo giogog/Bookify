@@ -25,6 +25,6 @@ public class Book
         ? Math.Round(Ratings.Sum(r => r.Stars) / (double)Ratings.Count, 1)
         : 0.0;
     public ICollection<Rating>? Ratings { get; set; }
-    public ICollection<Wishlist> Wishlists { get; set; }
+    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
     public Photo? Photo { get; set; }
 }

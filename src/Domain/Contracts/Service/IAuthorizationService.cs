@@ -10,6 +10,7 @@ public interface IAuthorizationService
 {
 
     Task<IdentityResult> Login(LoginDto loginDto);
+    Task<LoginWithTokenResult> LoginWithToken(LoginDto loginDto);
     Task<LoginResponseDto> Authenticate(Expression<Func<User, bool>> expression);
     Task<IdentityResult> Register(RegisterDto registerDto);
     Task<IdentityResult> AddNewRole(string role);

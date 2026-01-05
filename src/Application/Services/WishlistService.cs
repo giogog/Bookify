@@ -69,10 +69,22 @@ public class WishlistService(IRepositoryManager repositoryManager, ILogger<Wishl
         _logger.LogInformation("Fetching wishlist for user {UserId}", userId);
 
         var wishlist = await _repositoryManager.WishlistRepository.Wishlists()
+            .AsNoTracking()
             .Where(w => w.UserId == userId.GetGuid())
-            .Include(w => w.Book.Ratings)
-            .Select(b => new BookDto(b.Book.Name, b.Book.Price, b.Book.Rating, b.Book.Author.Name, b.Book.Author.Surname, b.Book.Category.Name, b.Book.SalePrice, b.Book.Sale,b.Book.Photo.Url))
-            .AsSplitQuery()
+            .Select(w => w.Book == null
+                ? null
+                : new BookDto(
+                    w.Book.Name,
+                    w.Book.Price,
+                    w.Book.Ratings != null && w.Book.Ratings.Any() ? Math.Round(w.Book.Ratings.Average(r => (double)r.Stars), 1) : 0.0,
+                    w.Book.Author != null ? w.Book.Author.Name : string.Empty,
+                    w.Book.Author != null ? w.Book.Author.Surname : null,
+                    w.Book.Category != null ? w.Book.Category.Name : string.Empty,
+                    w.Book.SalePrice,
+                    w.Book.Sale,
+                    w.Book.Photo != null ? w.Book.Photo.Url : null))
+            .Where(dto => dto != null)
+            .Select(dto => dto!)
             .ToListAsync();
 
 

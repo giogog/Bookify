@@ -49,6 +49,12 @@ public class SendConfirmationMailEventHandler : INotificationHandler<UserCreated
 
         var callbackUrl = $"{baseUrl}/api/Account/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
+        if (string.IsNullOrWhiteSpace(user.Email))
+        {
+            _logger.LogWarning("User {Username} has no email address; skipping confirmation email.", notification.Username);
+            return;
+        }
+
         _logger.LogInformation("Sending confirmation email to {Email} for user {Username}.", user.Email, notification.Username);
 
         var emailResult = await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Please confirm your account by <a href='{callbackUrl}'>clicking here</a>.");

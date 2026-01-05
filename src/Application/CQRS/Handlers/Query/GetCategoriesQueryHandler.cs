@@ -13,6 +13,9 @@ public class GetCategoriesQueryHandler(IRepositoryManager repositoryManager, ILo
 
     public async Task<IEnumerable<string>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
-        return await _repositoryManager.CategoryRepository.Categories().Select(c=>c.Name).ToArrayAsync();
+        return await _repositoryManager.CategoryRepository.Categories()
+            .AsNoTracking()
+            .Select(c => c.Name)
+            .ToArrayAsync(cancellationToken);
     }
 }
