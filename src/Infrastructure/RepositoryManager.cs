@@ -34,6 +34,9 @@ public class RepositoryManager : IRepositoryManager
     public RepositoryManager(ApplicationDbContext context)
     {
         _context = context;
+        _userRepository = new(() => throw new InvalidOperationException("UserRepository requires UserManager and must be constructed via DI."));
+        _roleRepository = new(() => throw new InvalidOperationException("RoleRepository requires RoleManager and must be constructed via DI."));
+        _ratingRepository = new(() => new RatingRepository(context));
         _bookRepository = new(() => new BookRepository(context));
         _authorRepository = new(() => new AuthorRepository(context));
         _categoryRepository = new(() => new CategoryRepository(context));

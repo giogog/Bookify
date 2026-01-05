@@ -13,7 +13,8 @@ Log.Logger = new LoggerConfiguration()
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
 // Custom configurations
-builder.Services.ConfigureCors();
+builder.Services.ConfigureCors(builder.Configuration);
+builder.Services.ConfigureRateLimiting(builder.Configuration);
 
 // Configure DB
 // IMPORTANT: only one provider should be registered for ApplicationDbContext.
@@ -40,18 +41,15 @@ builder.Services.ConfigureMediatR();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddAntiforgery();
-builder.Services.AddAuthentication();
 builder.Services.AddAuthorization(options => {
+    options.AddPolicy("Admin_Policy", policy =>
     {
-        options.AddPolicy("Admin_Policy", policy =>
-        {
-            policy.RequireRole("Admin");
-        });
-        options.AddPolicy("User_Policy", policy =>
-        {
-            policy.RequireRole("User"); 
-        });
-    }
+        policy.RequireRole("Admin");
+    });
+    options.AddPolicy("User_Policy", policy =>
+    {
+        policy.RequireRole("User");
+    });
 });
 
 
@@ -75,6 +73,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHsts();
+}
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 
@@ -83,6 +85,8 @@ app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
