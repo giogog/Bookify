@@ -1,4 +1,5 @@
 using API;
+using API.Endpoints;
 using API.Extensions;
 using Serilog;
 
