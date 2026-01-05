@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
-namespace API.Book;
+namespace API.Endpoints.Book;
 
 public static class BookEndpoints
 {

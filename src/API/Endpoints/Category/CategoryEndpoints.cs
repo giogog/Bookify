@@ -2,7 +2,7 @@ using Application.MediatR.Queries;
 using MediatR;
 using System.Net;
 
-namespace API.Category;
+namespace API.Endpoints.Category;
 
 public static class CategoryEndpoints
 {

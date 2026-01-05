@@ -4,7 +4,7 @@ using Domain.Models;
 using MediatR;
 using System.Net;
 
-namespace API.Account;
+namespace API.Endpoints.Account;
 
 public static class AccountEndpoints
 {

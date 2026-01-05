@@ -1,7 +1,7 @@
 using Contracts;
 using System.Net;
 
-namespace API.Wishlist;
+namespace API.Endpoints.Wishlist;
 
 public static class WishlistEndpoints
 {

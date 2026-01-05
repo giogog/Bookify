@@ -1,8 +1,8 @@
-﻿using API.Account;
-using API.Book;
-using API.Category;
-using API.Rating;
-using API.Wishlist;
+﻿using API.Endpoints.Account;
+using API.Endpoints.Book;
+using API.Endpoints.Category;
+using API.Endpoints.Rating;
+using API.Endpoints.Wishlist;
 
 namespace API;
 

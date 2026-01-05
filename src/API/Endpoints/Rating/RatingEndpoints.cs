@@ -2,7 +2,7 @@ using Application.MediatR.Commands;
 using MediatR;
 using System.Net;
 
-namespace API.Rating;
+namespace API.Endpoints.Rating;
 
 public static class RatingEndpoints
 {
