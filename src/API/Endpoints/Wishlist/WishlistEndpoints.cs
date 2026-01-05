@@ -20,7 +20,7 @@ public static class WishlistEndpoints
 
             await serviceManager.WishlistService.AddBookToWishlist(currentUserId, bookId);
 
-            var apiResponse = new ApiResponse("Book successfully added to wishlish", true, null, Convert.ToInt32(HttpStatusCode.Created));
+            var apiResponse = new ApiResponse("Book successfully added to wishlist", true, null, Convert.ToInt32(HttpStatusCode.Created));
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
@@ -34,7 +34,7 @@ public static class WishlistEndpoints
 
             await serviceManager.WishlistService.RemoveBookFromWishlist(currentUserId, bookId);
 
-            var apiResponse = new ApiResponse("Book successfully removed from wishlish", true, null, Convert.ToInt32(HttpStatusCode.OK));
+            var apiResponse = new ApiResponse("Book successfully removed from wishlist", true, null, Convert.ToInt32(HttpStatusCode.OK));
             return Results.Json(apiResponse, statusCode: apiResponse.StatusCode);
         });
 
