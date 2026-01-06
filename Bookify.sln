@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "src\Domain\Con
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "src\Application\Application.csproj", "{D3F024F4-0D7A-4466-8F3C-4B9FCB716823}"
 EndProject
-Project("{66A26720-8FB5-11D2-AA7E-00C04F688DDE}") = "Domain", "Domain", "{3A2BFC3D-7600-4A2F-8A86-AB2A2C87C1D9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{3A2BFC3D-7600-4A2F-8A86-AB2A2C87C1D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
