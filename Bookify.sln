@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Contracts", "src\Domain\Con
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "src\Application\Application.csproj", "{D3F024F4-0D7A-4466-8F3C-4B9FCB716823}"
 EndProject
+Project("{66A26720-8FB5-11D2-AA7E-00C04F688DDE}") = "Domain", "Domain", "{3A2BFC3D-7600-4A2F-8A86-AB2A2C87C1D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{86EEE25A-A4CF-4087-BAF5-B422B5309B8F} = {3A2BFC3D-7600-4A2F-8A86-AB2A2C87C1D9}
+		{090AC79E-60BC-4563-9DB3-343375B920F8} = {3A2BFC3D-7600-4A2F-8A86-AB2A2C87C1D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD991039-B170-4CF5-97C3-356C8B7BAD67}
